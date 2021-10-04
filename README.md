@@ -1,1 +1,1 @@
-# rack_JWTK_middleware
+# Rack Middleware to validate the JWTK Tokens

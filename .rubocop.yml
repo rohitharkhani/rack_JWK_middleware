@@ -1,0 +1,9 @@
+AllCops:
+  NewCops: enable
+  Exclude:
+    - 'Example/**/*'
+   
+   
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
