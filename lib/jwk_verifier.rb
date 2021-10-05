@@ -49,7 +49,7 @@ module JWK
 
     def get_url(jwt_data)
       issuer = jwt_data['iss']
-      url_template = @issuer_certificate_mappings[issuer] || @issuer_certificate_mappings[DEFAULT_ISSUER]
+      url_template = @issuer_certificate_mappings[issuer.to_sym] || @issuer_certificate_mappings[DEFAULT_ISSUER]
       return nil if url_template.nil?
 
       format(url_template, jwt_data)

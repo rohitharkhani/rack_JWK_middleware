@@ -17,7 +17,13 @@ class JWTKAuth
 
   def initialize(app, opts)
     @app = app
-    @exclude = opts.fetch(:exclude, ['health_check'])
+    @exclude = ['/health_check']
+    if opts[:excludes].nil?
+      @exclude = JSON.parse(ENV['JWKS_EXCLUDES']) unless ENV['JWKS_EXCLUDES'].nil?  
+    else
+      @exclude = opts[:excludes]
+    end
+    
     # try to parse JWKS_ISSUER_MAPPING env variable if it is not passed as arguments
     if opts[:issuers_mapping].nil?
       @issuer = JSON.parse(ENV['JWKS_ISSUER_MAPPING']) unless ENV['JWKS_ISSUER_MAPPING'].nil?

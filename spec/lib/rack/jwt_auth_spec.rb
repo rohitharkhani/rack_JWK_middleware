@@ -8,6 +8,7 @@ describe JWTKAuth do
   # dummy app to validate success
 
   let(:inner_app) { ->(_env) { [200, {}, 'success'] } }
+
   let(:app) { JWTKAuth.new(inner_app, { issuers_mapping: issuers_mapping }) }
 
   let(:jwk) do
@@ -36,8 +37,6 @@ describe JWTKAuth do
     { Default: jwks_url }
   end
 
-  let(:jwt_token_key_pair) { jwk }
-
   # add key so that JWK identifier can identify it
   let(:jwt_headers) do
     {
@@ -45,11 +44,13 @@ describe JWTKAuth do
     }
   end
 
+  let(:jwt_payload_iss){ 'http://localhost:8000/' }
+
   let(:jwt_payload) do
     {
       sub: '1234567890',
       name: 'John Doe',
-      iss: 'http://localhost:8000/',
+      iss: jwt_payload_iss,
       admin: true,
       iat: 1_516_239_022
     }
@@ -65,27 +66,137 @@ describe JWTKAuth do
       get('/')
       expect(last_response.status).to eq 200
     end
-    it 'attach header to context' do
-    end
-
-    it 'attach payload to context' do
-    end
   end
 
   context 'when invalid token is passed' do
-  end
-
-  context 'When whitelist is configured' do
-  end
-
-  context 'when signed with different key' do
     let(:jwt_token) do
       JWT.encode jwt_payload, OpenSSL::PKey::RSA.new(2048), 'RS256', jwt_headers
     end
+    it 'returns unauthorised' do
+      header 'Authorization', "Bearer malformed#{jwt_token}"
+      get('/')
+      expect(last_response.status).to eq 401
+    end
+  end
+
+  context 'when excluded URL is not passed' do
+    after(:each) do
+      ENV['JWKS_EXCLUDES'] = nil
+    end
+
+    it 'uses health_check as default and allow health_check calls' do
+      get('/health_check')
+      expect(last_response.status).to eq 200
+    end
+
+    it 'fallback to JWKS_EXCLUDES env and allows it' do
+      ENV['JWKS_EXCLUDES'] = '["/excludes"]'
+      get('/excludes')
+      expect(last_response.status).to eq 200
+    end
+
+    it 'fallback to JWKS_EXCLUDES env and block others' do
+      ENV['JWKS_EXCLUDES'] = '["/excludes"]'
+      get('/health_check')
+      expect(last_response.status).to eq 401
+    end
+  end
+
+  context 'when exlude url is passed in options' do
+    let(:app) do
+       JWTKAuth.new(inner_app, 
+        { 
+          issuers_mapping: issuers_mapping,
+          excludes: ['/allowed_url']
+        })
+    end
+    it 'allows exluded urls' do
+      get('/allowed_url')
+      expect(last_response.status).to eq 200
+    end
+    it 'block other urls' do
+      get('/denied_url')
+      expect(last_response.status).to eq 401
+    end
+  end
+
+  context 'when JWT signature does not match' do
+
+    let(:jwt_token) do
+      JWT.encode jwt_payload, OpenSSL::PKey::RSA.new(2048), 'RS256', jwt_headers
+    end
+
     it 'returns unauthorised' do
       header 'Authorization', "Bearer #{jwt_token}"
       get('/')
       expect(last_response.status).to eq 401
     end
   end
+
+  context 'when non RSA JWT is passed' do
+    let(:jwt_token) do
+      JWT.encode jwt_payload, 'hmac_secret', 'HS256', jwt_headers
+    end
+
+    it 'returns unauthorised' do
+      header 'Authorization', "Bearer #{jwt_token}"
+      get('/')
+      expect(last_response.status).to eq 401
+    end
+  end
+
+  context 'when issuer mapping is provided' do
+    let(:issuers_mapping) do
+      { 
+        'first_iss': 'http://first.com/jwks',
+        'second_iss': 'http://second.com/jwks',
+        Default: jwks_url 
+      }
+    end
+
+    let(:jwt_payload_iss){ 'first_iss' }
+
+    let(:first_iss_rsa){ OpenSSL::PKey::RSA.new(2048) }
+    let(:first_iss_jwk) { JWT::JWK.new(first_iss_rsa) }
+
+    let(:second_iss_rsa){ OpenSSL::PKey::RSA.new(2048) }
+    let(:second_iss_jwk) { JWT::JWK.new(second_iss_rsa) }
+
+    before(:each){
+      stub_request(:get, 'http://first.com/jwks')
+      .with(headers: { 'Accept' => '*/*', 'User-Agent' => 'Ruby' })
+      .to_return(status: 200, body:  { keys: [ first_iss_jwk.export ] }.to_json, headers: {})
+
+      stub_request(:get, 'http://second.com/jwks')
+      .with(headers: { 'Accept' => '*/*', 'User-Agent' => 'Ruby' })
+      .to_return(status: 200, body:  { keys: [ second_iss_jwk.export ] }.to_json, headers: {})
+    }
+
+    it 'uses a iss from the payload' do
+      token = JWT.encode jwt_payload, first_iss_rsa, 'RS256', jwt_headers
+      header 'Authorization', "Bearer #{token}"
+      get('/')
+      expect(last_response.status).to eq 200
+    end
+
+    it 'fallback to default if no matching' do
+      payload = jwt_payload
+      payload[:iss] = 'afjasfjasjfba'
+      token = JWT.encode payload, rsa_key_pair, 'RS256', jwt_headers
+
+      header 'Authorization', "Bearer #{token}"
+      get('/')
+
+      expect(last_response.status).to eq 200
+    end
+
+    it 'return 401 for the wrong iss' do
+      token = JWT.encode jwt_payload, second_iss_rsa, 'RS256', jwt_headers
+      header 'Authorization', "Bearer #{token}"
+      get('/')
+      expect(last_response.status).to eq 401
+    end
+
+  end
 end
+ 
