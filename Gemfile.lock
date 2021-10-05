@@ -22,6 +22,7 @@ GEM
       zeitwerk (~> 2.3)
     addressable (2.8.0)
       public_suffix (>= 2.0.2, < 5.0)
+    ast (2.4.2)
     builder (3.2.4)
     concurrent-ruby (1.1.9)
     crack (0.4.5)
@@ -47,6 +48,9 @@ GEM
       mini_portile2 (~> 2.6.1)
       racc (~> 1.4)
     openssl (2.2.0)
+    parallel (1.21.0)
+    parser (3.0.2.0)
+      ast (~> 2.4.1)
     public_suffix (4.0.6)
     racc (1.5.2)
     rack (2.2.3)
@@ -63,7 +67,9 @@ GEM
       method_source
       rake (>= 0.13)
       thor (~> 1.0)
+    rainbow (3.0.0)
     rake (13.0.6)
+    regexp_parser (2.1.1)
     rexml (3.2.5)
     rspec (3.10.0)
       rspec-core (~> 3.10.0)
@@ -86,8 +92,22 @@ GEM
       rspec-mocks (~> 3.10)
       rspec-support (~> 3.10)
     rspec-support (3.10.2)
+    rubocop (1.22.1)
+      parallel (~> 1.10)
+      parser (>= 3.0.0.0)
+      rainbow (>= 2.2.2, < 4.0)
+      regexp_parser (>= 1.8, < 3.0)
+      rexml
+      rubocop-ast (>= 1.12.0, < 2.0)
+      ruby-progressbar (~> 1.7)
+      unicode-display_width (>= 1.4.0, < 3.0)
+    rubocop-ast (1.12.0)
+      parser (>= 3.0.1.1)
+    rubocop-rspec (2.5.0)
+      rubocop (~> 1.19)
     ruby-debug-ide (0.7.3)
       rake (>= 0.8.1)
+    ruby-progressbar (1.11.0)
     simplecov (0.21.2)
       docile (~> 1.1)
       simplecov-html (~> 0.11)
@@ -97,6 +117,7 @@ GEM
     thor (1.1.0)
     tzinfo (2.0.4)
       concurrent-ruby (~> 1.0)
+    unicode-display_width (2.1.0)
     webmock (3.14.0)
       addressable (>= 2.8.0)
       crack (>= 0.3.2)
@@ -112,6 +133,7 @@ DEPENDENCIES
   openssl
   rspec
   rspec-rails (~> 5.0.0)
+  rubocop-rspec
   ruby-debug-ide
   simplecov
   webmock

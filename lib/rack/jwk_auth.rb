@@ -17,22 +17,32 @@ class JWTKAuth
 
   def initialize(app, opts)
     @app = app
-    @exclude = ['/health_check']
-    if opts[:excludes].nil?
-      @exclude = JSON.parse(ENV['JWKS_EXCLUDES']) unless ENV['JWKS_EXCLUDES'].nil?  
-    else
-      @exclude = opts[:excludes]
-    end
-    
-    # try to parse JWKS_ISSUER_MAPPING env variable if it is not passed as arguments
-    if opts[:issuers_mapping].nil?
-      @issuer = JSON.parse(ENV['JWKS_ISSUER_MAPPING']) unless ENV['JWKS_ISSUER_MAPPING'].nil?
-    else
-      @issuer = opts[:issuers_mapping]
-    end
+
+    initialize_excludes(opts[:excludes])
+    initialize_issuer(opts[:issuers_mapping])
+
     raise ArgumentError, 'Issuers mapping not provided' if @issuer.nil?
 
     @jwk_verifier = JWK::Verifier.new(@issuer)
+  end
+
+  def initialize_excludes(excludes)
+    # default is /health_check
+    @exclude = ['/health_check']
+    if excludes.nil?
+      @exclude = JSON.parse(ENV['JWKS_EXCLUDES']) unless ENV['JWKS_EXCLUDES'].nil?
+    else
+      @exclude = excludes
+    end
+  end
+
+  def initialize_issuer(issuers)
+    # try to parse JWKS_ISSUER_MAPPING env variable if it is not passed as arguments
+    if issuers.nil?
+      @issuer = JSON.parse(ENV['JWKS_ISSUER_MAPPING']) unless ENV['JWKS_ISSUER_MAPPING'].nil?
+    else
+      @issuer = issuers
+    end
   end
 
   def call(env)

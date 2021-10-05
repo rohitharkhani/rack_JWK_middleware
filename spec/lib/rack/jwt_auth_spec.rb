@@ -44,7 +44,7 @@ describe JWTKAuth do
     }
   end
 
-  let(:jwt_payload_iss){ 'http://localhost:8000/' }
+  let(:jwt_payload_iss) { 'http://localhost:8000/' }
 
   let(:jwt_payload) do
     {
@@ -104,11 +104,11 @@ describe JWTKAuth do
 
   context 'when exlude url is passed in options' do
     let(:app) do
-       JWTKAuth.new(inner_app, 
-        { 
-          issuers_mapping: issuers_mapping,
-          excludes: ['/allowed_url']
-        })
+      JWTKAuth.new(inner_app,
+                   {
+                     issuers_mapping: issuers_mapping,
+                     excludes: ['/allowed_url']
+                   })
     end
     it 'allows exluded urls' do
       get('/allowed_url')
@@ -121,7 +121,6 @@ describe JWTKAuth do
   end
 
   context 'when JWT signature does not match' do
-
     let(:jwt_token) do
       JWT.encode jwt_payload, OpenSSL::PKey::RSA.new(2048), 'RS256', jwt_headers
     end
@@ -147,30 +146,30 @@ describe JWTKAuth do
 
   context 'when issuer mapping is provided' do
     let(:issuers_mapping) do
-      { 
-        'first_iss': 'http://first.com/jwks',
-        'second_iss': 'http://second.com/jwks',
-        Default: jwks_url 
+      {
+        first_iss: 'http://first.com/jwks',
+        second_iss: 'http://second.com/jwks',
+        Default: jwks_url
       }
     end
 
-    let(:jwt_payload_iss){ 'first_iss' }
+    let(:jwt_payload_iss) { 'first_iss' }
 
-    let(:first_iss_rsa){ OpenSSL::PKey::RSA.new(2048) }
+    let(:first_iss_rsa) { OpenSSL::PKey::RSA.new(2048) }
     let(:first_iss_jwk) { JWT::JWK.new(first_iss_rsa) }
 
-    let(:second_iss_rsa){ OpenSSL::PKey::RSA.new(2048) }
+    let(:second_iss_rsa) { OpenSSL::PKey::RSA.new(2048) }
     let(:second_iss_jwk) { JWT::JWK.new(second_iss_rsa) }
 
-    before(:each){
+    before(:each) do
       stub_request(:get, 'http://first.com/jwks')
-      .with(headers: { 'Accept' => '*/*', 'User-Agent' => 'Ruby' })
-      .to_return(status: 200, body:  { keys: [ first_iss_jwk.export ] }.to_json, headers: {})
+        .with(headers: { 'Accept' => '*/*', 'User-Agent' => 'Ruby' })
+        .to_return(status: 200, body: { keys: [first_iss_jwk.export] }.to_json, headers: {})
 
       stub_request(:get, 'http://second.com/jwks')
-      .with(headers: { 'Accept' => '*/*', 'User-Agent' => 'Ruby' })
-      .to_return(status: 200, body:  { keys: [ second_iss_jwk.export ] }.to_json, headers: {})
-    }
+        .with(headers: { 'Accept' => '*/*', 'User-Agent' => 'Ruby' })
+        .to_return(status: 200, body: { keys: [second_iss_jwk.export] }.to_json, headers: {})
+    end
 
     it 'uses a iss from the payload' do
       token = JWT.encode jwt_payload, first_iss_rsa, 'RS256', jwt_headers
@@ -196,7 +195,5 @@ describe JWTKAuth do
       get('/')
       expect(last_response.status).to eq 401
     end
-
   end
 end
- 

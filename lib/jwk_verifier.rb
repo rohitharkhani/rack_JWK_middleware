@@ -10,7 +10,7 @@ module JWK
 
     def initialize(issuer_certificate_mappings)
       @issuer_certificate_mappings = issuer_certificate_mappings
-      @cahecedKeys = {}
+      @caheced_keys = {}
     end
 
     def validate(token)
@@ -36,14 +36,14 @@ module JWK
     def get_certificate(jwt_data)
       xt256 = jwt_data['xt#256']
       kid = jwt_data['kid']
-      jwks = @cahecedKeys[xt256] || @cahecedKeys[kid]
+      jwks = @caheced_keys[xt256] || @caheced_keys[kid]
       return jwks unless jwks.nil?
 
       url = get_url(jwt_data)
       jwk_key = get_keys(url)
       return null if jwk_key.nil?
 
-      @cahecedKeys[xt256 || kid] = jwk_key
+      @caheced_keys[xt256 || kid] = jwk_key
       jwk_key
     end
 
