@@ -56,6 +56,7 @@ module JWK
     end
 
     def get_keys(url)
+      # TODO: filter public key using kid or xt#256
       response = reterive_keys(url)
       return if response.nil?
 
