@@ -3,13 +3,13 @@
 require 'spec_helper'
 require 'jwt'
 
-describe JWTKAuth do
+describe JWKAuth do
   let(:rsa_key_pair) { OpenSSL::PKey::RSA.new(2048) }
   # dummy app to validate success
 
   let(:inner_app) { ->(_env) { [200, {}, 'success'] } }
 
-  let(:app) { JWTKAuth.new(inner_app, { issuers_mapping: issuers_mapping }) }
+  let(:app) { JWKAuth.new(inner_app, { issuers_mapping: issuers_mapping }) }
 
   let(:jwk) do
     JWT::JWK.new(rsa_key_pair)
@@ -72,7 +72,7 @@ describe JWTKAuth do
     let(:jwt_token) do
       JWT.encode jwt_payload, OpenSSL::PKey::RSA.new(2048), 'RS256', jwt_headers
     end
-    it 'returns unauthorised' do
+    it 'returns unauthorized' do
       header 'Authorization', "Bearer malformed#{jwt_token}"
       get('/')
       expect(last_response.status).to eq 401
@@ -104,13 +104,13 @@ describe JWTKAuth do
 
   context 'when exlude url is passed in options' do
     let(:app) do
-      JWTKAuth.new(inner_app,
+      JWKAuth.new(inner_app,
                    {
                      issuers_mapping: issuers_mapping,
                      excludes: ['/allowed_url']
                    })
     end
-    it 'allows exluded urls' do
+    it 'allows excluded urls' do
       get('/allowed_url')
       expect(last_response.status).to eq 200
     end
@@ -125,7 +125,7 @@ describe JWTKAuth do
       JWT.encode jwt_payload, OpenSSL::PKey::RSA.new(2048), 'RS256', jwt_headers
     end
 
-    it 'returns unauthorised' do
+    it 'returns unauthorized' do
       header 'Authorization', "Bearer #{jwt_token}"
       get('/')
       expect(last_response.status).to eq 401
@@ -137,7 +137,7 @@ describe JWTKAuth do
       JWT.encode jwt_payload, 'hmac_secret', 'HS256', jwt_headers
     end
 
-    it 'returns unauthorised' do
+    it 'returns unauthorized' do
       header 'Authorization', "Bearer #{jwt_token}"
       get('/')
       expect(last_response.status).to eq 401

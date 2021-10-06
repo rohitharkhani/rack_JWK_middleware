@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative '../jwk_verifier'
-class JWTKAuth
+class JWKAuth
   # The last segment gets dropped for 'none' algorithm since there is no
   # signature so both of these patterns are valid. All character chunks
   # are base64url format and periods.

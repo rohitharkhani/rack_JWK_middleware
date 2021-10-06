@@ -10,7 +10,7 @@ module JWK
 
     def initialize(issuer_certificate_mappings)
       @issuer_certificate_mappings = issuer_certificate_mappings
-      @caheced_keys = {}
+      @cached_keys = {}
     end
 
     def validate(token)
@@ -36,14 +36,14 @@ module JWK
     def get_certificate(jwt_data)
       xt256 = jwt_data['xt#256']
       kid = jwt_data['kid']
-      jwks = @caheced_keys[xt256] || @caheced_keys[kid]
+      jwks = @cached_keys[xt256] || @cached_keys[kid]
       return jwks unless jwks.nil?
 
       url = get_url(jwt_data)
       jwk_key = get_keys(url)
       return null if jwk_key.nil?
 
-      @caheced_keys[xt256 || kid] = jwk_key
+      @cached_keys[xt256 || kid] = jwk_key
       jwk_key
     end
 
@@ -57,13 +57,13 @@ module JWK
 
     def get_keys(url)
       # TODO: filter public key using kid or xt#256
-      response = reterive_keys(url)
+      response = retrieve_keys(url)
       return if response.nil?
 
       decode_public_key(response)
     end
 
-    def reterive_keys(url)
+    def retrieve_keys(url)
       uri = URI(url)
       res = Net::HTTP.get_response(uri)
       return unless res.is_a?(Net::HTTPSuccess)
