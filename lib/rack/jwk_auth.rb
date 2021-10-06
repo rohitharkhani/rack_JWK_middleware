@@ -34,6 +34,7 @@ class JWKAuth
     else
       @exclude = excludes
     end
+    @exclude << '/health_check' unless @exclude.include?('/health_check')
   end
 
   def initialize_issuer(issuers)

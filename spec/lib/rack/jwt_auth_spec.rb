@@ -97,9 +97,16 @@ describe JWKAuth do
 
     it 'fallback to JWKS_EXCLUDES env and block others' do
       ENV['JWKS_EXCLUDES'] = '["/excludes"]'
-      get('/health_check')
+      get('/test_other')
       expect(last_response.status).to eq 401
     end
+
+    it 'health_check is always allowed' do
+      ENV['JWKS_EXCLUDES'] = '["/excludes"]'
+      get('/health_check')
+      expect(last_response.status).to eq 200
+    end
+
   end
 
   context 'when exlude url is passed in options' do
