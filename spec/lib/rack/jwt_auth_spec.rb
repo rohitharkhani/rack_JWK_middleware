@@ -106,16 +106,17 @@ describe JWKAuth do
       get('/health_check')
       expect(last_response.status).to eq 200
     end
-
   end
 
-  context 'when exlude url is passed in options' do
+  context 'when exclude url is passed in options' do
     let(:app) do
-      JWKAuth.new(inner_app,
-                   {
-                     issuers_mapping: issuers_mapping,
-                     excludes: ['/allowed_url']
-                   })
+      JWKAuth.new(
+        inner_app,
+        {
+          issuers_mapping: issuers_mapping,
+          excludes: ['/allowed_url']
+        }
+      )
     end
     it 'allows excluded urls' do
       get('/allowed_url')

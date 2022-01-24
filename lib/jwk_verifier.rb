@@ -34,13 +34,13 @@ module JWK
     private
 
     def get_certificate(jwt_data)
-      xt256 = jwt_data['xt#256']
+      xt256 = jwt_data['x5t#S256']
       kid = jwt_data['kid']
       jwks = @cached_keys[xt256] || @cached_keys[kid]
       return jwks unless jwks.nil?
 
       url = get_url(jwt_data)
-      jwk_key = get_keys(url)
+      jwk_key = get_key(url, jwt_data)
       return null if jwk_key.nil?
 
       @cached_keys[xt256 || kid] = jwk_key
@@ -55,12 +55,23 @@ module JWK
       format(url_template, jwt_data)
     end
 
-    def get_keys(url)
-      # TODO: filter public key using kid or xt#256
+    def get_key(url, jwt_data)
       response = retrieve_keys(url)
       return if response.nil?
 
-      decode_public_key(response)
+      key = find_relevant_key(response, jwt_data)
+      return if key.nil?
+
+      decode_public_key(key)
+    end
+
+    def find_relevant_key(jwk_response, jwt_data)
+      xt256 = jwt_data['x5t#S256']
+      kid = jwt_data['kid']
+
+      jwk_response.find do |key|
+        true if key['x5t#S256'] == xt256 || (xt256.nil? && key['kid'] == kid)
+      end
     end
 
     def retrieve_keys(url)
@@ -72,8 +83,8 @@ module JWK
       keys[:keys]
     end
 
-    def decode_public_key(jwk_response)
-      JWT::JWK.import(jwk_response.first).public_key
+    def decode_public_key(key)
+      JWT::JWK.import(key).public_key
     end
   end
 end
